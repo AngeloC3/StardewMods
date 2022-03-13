@@ -5,7 +5,7 @@ namespace StardewMediaKeys
     internal class KeyClicker
     {
         // Fields related to keyboard events
-        private const int KEYEVENTF_EXTENTEDKEY = 1;
+        private const int KEYEVENTF_EXTENTEDKEY = 0;
         private const int KEYEVENTF_KEYUP = 0;
         /// <summary>Hexidecimal value for the Next Track key</summary>
         public byte NEXT = 0xB0;

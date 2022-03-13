@@ -20,6 +20,10 @@ namespace StardewMediaKeys
         private const string modName = "Stardew Media Keys";
         /// <summary>Texture for the buttons</summary>
         private Texture2D LBTexture;
+        /// <summary>Whether or not this is used with Mobile Phone</summary>
+        private bool onMobile;
+        /// <summary>Mobile phone api object</summary>
+        private IMobilePhoneApi api;
         /// <summary>The media buttons to draw.</summary>
         private readonly List<ClickableTextureComponent> mediaButtons = new List<ClickableTextureComponent>();
         /// <summary>The text labels to draw</summary>
@@ -32,9 +36,15 @@ namespace StardewMediaKeys
         /// <summary>Constructs a SMKMenu with an IModHelper and a ModConfig object</summary>
         /// <param name="helper">The IModHelper.</param>
         /// <param name="Config">The mod's ModConfig object.</param>
-        public SMKMenu(IModHelper helper, ModConfig Config)
+        public SMKMenu(IModHelper helper, ModConfig Config, bool onMobile = false)
             : base(Game1.viewport.Width / 2 - (UIWidth + IClickableMenu.borderWidth * 2) / 2, Game1.viewport.Height / 2 - (UIHeight + IClickableMenu.borderWidth * 2) / 2 - Game1.tileSize, UIWidth + IClickableMenu.borderWidth * 2, UIHeight + IClickableMenu.borderWidth * 2 + Game1.tileSize)
         {
+            this.onMobile = onMobile;
+            if (onMobile)
+            {
+                this.api = helper.ModRegistry.GetApi<IMobilePhoneApi>("aedenthorn.MobilePhone");
+                exitFunction = () => this.onExitFunc();
+            }
             LBTexture = helper.Content.Load<Texture2D>("assets/LBTexture.png", ContentSource.ModFolder);
             this.Config = Config;
             this.initializeUpperRightCloseButton();
@@ -101,6 +111,8 @@ namespace StardewMediaKeys
         /// <summary>Handles a button click if the user clicks a button</summary>
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
+            if (this.onMobile && api.IsCallingNPC())
+                return;
 
             foreach (ClickableTextureComponent button in this.mediaButtons)
             {
@@ -147,7 +159,7 @@ namespace StardewMediaKeys
                     break;
                 // this is the case for the close button
                 case "":
-                    Game1.exitActiveMenu();
+                    this.exitThisMenu();
                     break;
                 
             }
@@ -156,7 +168,17 @@ namespace StardewMediaKeys
         /// <summary>Exits on right click</summary>
         public override void receiveRightClick(int x, int y, bool playSound = true)
         {
-            Game1.exitActiveMenu();
+            if (this.onMobile && api.IsCallingNPC())
+                return;
+            this.exitThisMenu();
+        }
+
+        private void onExitFunc()
+        {
+            if (this.onMobile && this.api != null)
+            {
+                api.SetAppRunning(false);
+            }
         }
 
     }

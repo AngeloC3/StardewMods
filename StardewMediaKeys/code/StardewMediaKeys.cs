@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI;
+﻿using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 
@@ -21,7 +22,8 @@ namespace StardewMediaKeys
         {
             this.helper = helper;
             this.Config = this.Helper.ReadConfig<ModConfig>();
-            this.helper.Events.Input.ButtonsChanged += this.OnButtonsChanged;
+            if (!this.Config.OnlyUsableWithPhone)
+                this.helper.Events.Input.ButtonsChanged += this.OnButtonsChanged;
             this.Helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
         }
 
@@ -34,22 +36,32 @@ namespace StardewMediaKeys
         /// <param name="e">The event data.</param>
         private void OnButtonsChanged(object sender, ButtonsChangedEventArgs e)
         {
-            // ignored if a menu is opened, or the world has not initialized yet
-            if (Game1.activeClickableMenu != null || 
-                //(!Context.IsPlayerFree) || // Disabed so it can be opened during a cutscene to turn off music
-                !Context.IsWorldReady) return;
+            // ignored if a menu that isnt SMKMenu is opened, or the world has not initialized yet
+            if ( (Game1.activeClickableMenu != null && !(Game1.activeClickableMenu is SMKMenu))
+                 //(!Context.IsPlayerFree) || // Disabed so it can be opened during a cutscene to turn off music
+                 ||  !Context.IsWorldReady) return;
 
            // opens menu if the configurable key is pressed
             if (this.Config.ToggleKey.JustPressed())
             {
+                if (Game1.activeClickableMenu is SMKMenu)
+                {
+                    SMKMenu menu = (SMKMenu)Game1.activeClickableMenu;
+                    menu.exitThisMenu();
+                    return;
+                }
                 Game1.activeClickableMenu = new SMKMenu(this.helper, this.Config);
             }
         }
 
-        // code used from https://github.com/spacechase0/StardewValleyMods/tree/develop/GenericModConfigMenu#for-c-mod-authors
+        /* code used from 
+         *      https://github.com/spacechase0/StardewValleyMods/tree/develop/GenericModConfigMenu#for-c-mod-authors
+         *      https://www.nexusmods.com/stardewvalley/articles/467
+         */
         /// <summary>Sets up the mod config menu on launch</summary>
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
         {
+            // Generic Mod Config Menu stuff here
             // get Generic Mod Config Menu's API (if it's installed)
             var configMenu = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (configMenu is null)
@@ -79,6 +91,30 @@ namespace StardewMediaKeys
                 getValue: () => this.Config.ToggleKey,
                 setValue: value => this.Config.ToggleKey = value
             );
+
+            // add boolean option
+            configMenu.AddBoolOption(
+                mod: this.ModManifest,
+                name: () => "Only usable with Mobile Phone",
+                tooltip: () => "If this is true, the keybind hotkey is disabled, making it only openable via the Mobile Phone mod. Essentially, this just disables the keybind activation. Restart your game for this to take effect.",
+                getValue: () => this.Config.OnlyUsableWithPhone,
+                setValue: value => this.Config.OnlyUsableWithPhone = value
+            );
+
+            // Mobile Phone app stuff here
+            IMobilePhoneApi api = Helper.ModRegistry.GetApi<IMobilePhoneApi>("aedenthorn.MobilePhone");
+            if (api != null)
+            {
+                void setSMKAsMenu()
+                {
+                    api.SetAppRunning(true);
+                    Game1.activeClickableMenu = new SMKMenu(this.helper, this.Config, true);
+                }
+
+                Texture2D appIcon = Helper.Content.Load<Texture2D>(System.IO.Path.Combine("assets", "SMKApp.png"));
+                bool success = api.AddApp(Helper.ModRegistry.ModID, "Stardew Media Keys", setSMKAsMenu, appIcon);
+                Monitor.Log($"loaded phone app successfully: {success}", LogLevel.Debug);
+            }
 
         }
 

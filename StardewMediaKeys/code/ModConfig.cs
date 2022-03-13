@@ -9,5 +9,8 @@ namespace StardewMediaKeys
 
         /// <summary>true if the title is in blue - false if default text color</summary>
         public bool BlueNotDefaultTitle { get; set; } = true;
+
+        /// <summary>Disables the hotkey making this only avaialble for use via Mobile Phone</summary>
+        public bool OnlyUsableWithPhone { get; set; } = false;
     }
 }

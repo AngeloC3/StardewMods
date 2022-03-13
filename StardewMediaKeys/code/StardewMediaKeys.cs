@@ -67,8 +67,8 @@ namespace StardewMediaKeys
                 mod: this.ModManifest,
                 name: () => "Blue title instead of default",
                 tooltip: () => "The title in the pop up menu will be blue if true and default text color if false",
-                getValue: () => this.Config.BlueNotDefaultText,
-                setValue: value => this.Config.BlueNotDefaultText = value
+                getValue: () => this.Config.BlueNotDefaultTitle,
+                setValue: value => this.Config.BlueNotDefaultTitle = value
             );
 
             // add KeyBindList option

@@ -87,7 +87,7 @@ namespace StardewMediaKeys
                 SpriteFont font = Game1.smallFont;
                 if (label.name == modName) 
                 { 
-                    if (this.Config.BlueNotDefaultText)
+                    if (this.Config.BlueNotDefaultTitle)
                         color = Color.Blue;
                     font = Game1.dialogueFont;
                 }
@@ -147,10 +147,16 @@ namespace StardewMediaKeys
                     break;
                 // this is the case for the close button
                 case "":
-                    Game1.activeClickableMenu = null;
+                    Game1.exitActiveMenu();
                     break;
                 
             }
+        }
+
+        /// <summary>Exits on right click</summary>
+        public override void receiveRightClick(int x, int y, bool playSound = true)
+        {
+            Game1.exitActiveMenu();
         }
 
     }
